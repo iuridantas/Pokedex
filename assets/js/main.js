@@ -1,48 +1,76 @@
 let pokeForm = document.getElementById('searchPokemon');
+let pokemonList = [];
+let pokemonsListHtml = [];
 
-const getpokemonurl = id => `https://pokeapi.co/api/v2/pokemon/${id}`
+const htmlListaPokemons = document.querySelector(`[data-js="pokedex"]`);
+const numeroDePokemons = 52;
+const getPokemonListURL = `https://pokeapi.co/api/v2/pokemon?limit=${numeroDePokemons}`;
 
-const fetchpokemon = () => {
-
-  const pokemonpromises = []
-
-  for (let i = 1; i <= 150; i++){
-    pokemonpromises.push(fetch(getpokemonurl(i)).then(response => response.json()))
-  }
-
-  Promise.all(pokemonpromises)
-    .then(pokemons => {
-      const lispokemons = pokemons.reduce((accumulator, pokemon) =>{
-        const types = pokemon.types.map(typeinfo => typeinfo.type.name)
-
-        console.log(pokemon)
-
-        accumulator += `
-        <li class="card ${types[0]}">
-        <img class = "card-image" alt="${pokemon.name}" src="${pokemon.sprites.other["dream_world"].front_default}"/>
-          <p class = "card-subtitle"><span>Nº </span>${pokemon.id.toString().padStart(3, '0')}</p>
-          <h2 class = "card-title">${pokemon.name}</h2>
-          <h3 class = "card-subtitle">${types.join(` | `)}</h3>
-        </li>`
-        return accumulator
-      },``)
-
-      const  ul = document.querySelector(`[data-js = "pokedex"]`)
-
-      ul.innerHTML = lispokemons 
-    })
+async function getPokemonList() {
+    await fetch(getPokemonListURL)
+        .then(response => response.json())
+        .then(responseJson => {
+            pokemonList = responseJson.results;
+        });
 }
 
-fetchpokemon()
+async function mostraPokemonNaPagina(urlPokemonApi) {
+    await fetch(urlPokemonApi)
+        .then(response => response.json())
+        .then(pokemon => {
+            const types = pokemon.types.map(typeinfo => typeinfo.type.name);
 
-pokeForm.addEventListener('submit', e =>{
-  e.preventDefault();
-  let searchPokemon = document.getElementById('pokemon').value;
-  pokemonpromises(searchPokemon, true);
-})
+            htmlPokemon = `
+              <li style="order:${pokemon.id}" class="card ${types[0]}">
+                <a href="pokemon.html?nome=${pokemon.name}">
+                  <img class="card-image" alt="${pokemon.name}" src="${
+                pokemon.sprites.other['dream_world'].front_default
+            }"/>
+                </a>
+                <p class="card-subtitle black"><span>Nº </span>${pokemon.id
+                    .toString()
+                    .padStart(3, '0')}</p>
+                <h2 class="card-title">${pokemon.name}</h2>
+                <h3 class="card-subtitle black">${types.join(` | `)}</h3>
+              </li>`;
 
-function exitModal(){
-  const modalPokemon = document.getElementById('modalPokemon');
-  modalPokemon.style.display ='none'
-  fetchpokemon()
+            htmlListaPokemons.innerHTML += htmlPokemon;
+        });
 }
+
+async function mostraTodosOsPokemons() {
+    await getPokemonList();
+
+    pokemonList.forEach(pokemon => {
+        mostraPokemonNaPagina(pokemon.url);
+    });
+}
+
+function limpaListaDePokemons() {
+    htmlListaPokemons.innerHTML = '';
+}
+
+function searchPokemon() {
+    limpaListaDePokemons();
+
+    const valorPesquisado = document.getElementById('pokemon').value;
+
+    if (valorPesquisado == '') {
+        mostraTodosOsPokemons();
+    }
+
+    const listaPokemonsEncontrados = pokemonList.filter(pokemon => {
+        return pokemon.name == valorPesquisado;
+    });
+
+    const pokemonEncontrado = listaPokemonsEncontrados[0];
+
+    mostraPokemonNaPagina(pokemonEncontrado.url);
+}
+
+mostraTodosOsPokemons();
+
+pokeForm.addEventListener('submit', e => {
+    e.preventDefault();
+    searchPokemon();
+});
