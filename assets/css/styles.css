@@ -79,6 +79,7 @@ h1 {
 .container {
     padding: 40px;
     margin: 0 auto;
+    background-color: #f5202054;
 }
 
 .pokedex {
@@ -304,6 +305,7 @@ h1 {
     .container {
         padding: 40px;
         margin: 0 auto;
+        background-color: #f5202054;
     }
     
     .pokedex {
